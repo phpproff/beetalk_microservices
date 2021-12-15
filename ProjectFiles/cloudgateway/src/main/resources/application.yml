@@ -1,0 +1,44 @@
+server:
+    port: 9001
+eureka:
+    client:
+        serviceUrl: 
+            defaultZone: http://localhost:9000/eureka
+spring:
+  application:
+    name: ApiGateway
+  cloud:
+    gateway:
+      routes:
+        - id: tasks
+          uri: lb://tasks
+          predicates:
+            - Path=/tasks/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: tasks
+                fallbackuri: forward:/tasksfallback
+        - id: offers
+          uri: lb://offers
+          predicates:
+            - Path=/offers/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: offers
+                fallbackuri: forward:/offersfallback
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 4000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
